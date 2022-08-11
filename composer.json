@@ -1,0 +1,31 @@
+{
+    "name": "framex/media",
+    "description": "FrameX (FX) Media Plugin",
+    "type": "library",
+    "keywords": [
+        "localzet", "framex", "framex-plugin"
+    ],
+    "license": "GPL-3.0-only",
+    "authors": [{
+        "name": "localzet",
+        "email": "creator@localzet.ru",
+        "homepage": "https://www.localzet.ru",
+        "role": "Developer"
+    }],
+    "support": {
+        "email": "support@localzet.ru",
+        "docs": "https://localzet.gitbook.io"
+    },
+    "funding": [{
+        "type": "other",
+        "url": "https://www.tinkoff.ru/cf/Ad5MBNhodod"
+    }],
+    "autoload": {
+        "psr-4": {
+            "FrameX\\Media\\": "src/"
+        }
+    },
+    "require-dev": {
+        "localzet/framex": ">=1.0.0"
+    }
+}
