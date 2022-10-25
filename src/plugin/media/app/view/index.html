@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <title>localzet</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css"
+        href="/media/build/mediaAPI.bundle.css?v=<?= filemtime(public_path() . '/media/build/mediaAPI.bundle.css') ?>">
+    <link rel="icon" type="image/png" href="/media/favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/media/apple-touch-icon-180x180.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="180x180" href="/media/apple-touch-icon-180x180.png" />
+    <meta name="description" property="og:description"
+        content="Cloud service for image storage and delivery. Upload files and accept image-filters on the fly with simple API">
+    <meta name="keywords" content="cloud service,upload files,image storage">
+    <meta name="image" property="og:image" content="/media/meta_img.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+</head>
+
+<body>
+    <div class="media">
+        <div class="media__drag-n-drop">
+            <div class="media__contents">
+                <div class="media__logo">
+                    <img src="/media/app/svg/capella-logo.svg">
+                </div>
+                <div class="media__uploading">
+                    <?php include public_path() . '/media/app/svg/startup.svg'; ?>
+                    <div class="media__uploading-title">Загрузка</div>
+                    <div class="media__uploading-progress">
+                        <div class="js-media__uploading-progress" style="width: 0%"></div>
+                    </div>
+                    <div class="media__uploading-filename"></div>
+                </div>
+                <div class="media__dark-contents">
+                    <p>Upload a file using drag-n-drop, clipboard or with <a
+                            href="https://github.com/codex-team/capella#upload-api">API</a>. You will instantly get
+                        a link to your file.</p>
+                    <button id="uploadFileButton" class="media__button">Select picture</button><br>
+                    <input id="uploadLinkField" type="text" class="media__input" placeholder="Вставьте URL" />
+                </div>
+                <div class="media__drag-n-drop-activator">
+                    <img src="/media/app/svg/cloud-computing.svg">
+                    Drop file to upload
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/media/build/mediaAPI.bundle.js?v=<?= filemtime(public_path() . '/media/build/mediaAPI.bundle.js') ?>"
+        onload="mediaAPI.init();"></script>
+</body>
+
+</html>
