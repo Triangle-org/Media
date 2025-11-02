@@ -12,7 +12,7 @@
  * @license     https://www.localzet.ru/license GNU GPLv3 License
  */
 
-namespace FrameX\Media;
+namespace Triangle\Media;
 
 /**
  * Parent class, which describes acceptable extension,

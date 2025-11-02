@@ -1,31 +1,33 @@
 {
-    "name": "framex/media",
-    "description": "FrameX (FX) Media Plugin",
-    "type": "library",
-    "keywords": [
-        "localzet", "framex", "framex-plugin"
-    ],
-    "license": "GPL-3.0-only",
-    "authors": [{
-        "name": "localzet",
-        "email": "creator@localzet.ru",
-        "homepage": "https://www.localzet.ru",
-        "role": "Developer"
-    }],
-    "support": {
-        "email": "support@localzet.ru",
-        "docs": "https://localzet.gitbook.io"
-    },
-    "funding": [{
-        "type": "other",
-        "url": "https://www.tinkoff.ru/cf/Ad5MBNhodod"
-    }],
-    "autoload": {
-        "psr-4": {
-            "FrameX\\Media\\": "src/"
-        }
-    },
-    "require-dev": {
-        "localzet/framex": ">=1.0.0"
+  "name": "triangle/media",
+  "description": "Triangle Media Plugin",
+  "type": "library",
+  "keywords": [
+    "localzet",
+    "Triangle",
+    "Media"
+  ],
+  "license": "AGPL-3.0-or-later",
+  "authors": [
+    {
+      "role": "Developer",
+      "name": "Ivan Zorin",
+      "email": "creator@localzet.com",
+      "homepage": "https://github.com/localzet"
     }
+  ],
+  "support": {
+    "email": "support@localzet.com",
+    "source": "https://github.com/Triangle-org/Media"
+  },
+  "autoload": {
+    "psr-4": {
+      "Triangle\\Media\\": "src/"
+    }
+  },
+  "require": {
+    "php": "^8.1",
+    "triangle/engine": "^8.1",
+    "ext-imagick": "*"
+  }
 }

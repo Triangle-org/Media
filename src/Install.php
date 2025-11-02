@@ -1,82 +1,103 @@
 <?php
 
 /**
- * @package     FrameX (FX) Media Plugin
- * @link        https://localzet.gitbook.io
- * 
- * @author      localzet <creator@localzet.ru>
- * 
- * @copyright   Copyright (c) 2018-2020 Zorin Projects 
- * @copyright   Copyright (c) 2020-2022 NONA Team
- * 
- * @license     https://www.localzet.ru/license GNU GPLv3 License
+ * @package     Triangle Media Plugin
+ * @link        https://github.com/Triangle-org/Media
+ *
+ * @author      Ivan Zorin <creator@localzet.com>
+ * @copyright   Copyright (c) 2018-2024 Localzet Group
+ * @license     GNU Affero General Public License, version 3
+ *
+ *              This program is free software: you can redistribute it and/or modify
+ *              it under the terms of the GNU Affero General Public License as
+ *              published by the Free Software Foundation, either version 3 of the
+ *              License, or (at your option) any later version.
+ *
+ *              This program is distributed in the hope that it will be useful,
+ *              but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *              MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *              GNU Affero General Public License for more details.
+ *
+ *              You should have received a copy of the GNU Affero General Public License
+ *              along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace FrameX\Media;
+namespace Triangle\Media;
 
+/**
+ * Класс Install
+ * Этот класс предназначен для установки и обновления плагина.
+ */
 class Install
 {
-    public const FRAMEX_PLUGIN = true;
+    public const TRIANGLE_PLUGIN = true;
 
     /**
      * @var array
      */
     protected static $pathRelation = array(
-        'config/plugin/framex/media' => 'config/plugin/framex/media',
-        'autoload/plugin/framex/media' => 'autoload/plugin/framex/media',
+        'Config' => 'config/plugin/triangle/media',
+        'Autoload' => 'autoload/plugin/triangle/media',
     );
 
     /**
-     * Install
+     * Установка плагина
      * @return void
      */
-    public static function install()
+    public static function install(): void
     {
         static::installByRelation();
     }
 
     /**
-     * Uninstall
+     * Обновление плагина
      * @return void
      */
-    public static function uninstall()
+    public static function update(): void
+    {
+        static::installByRelation();
+    }
+
+    /**
+     * Удаление плагина
+     * @return void
+     */
+    public static function uninstall(): void
     {
         self::uninstallByRelation();
     }
 
     /**
-     * installByRelation
      * @return void
      */
-    public static function installByRelation()
+    public static function installByRelation(): void
     {
-        foreach (static::$pathRelation as $source => $dest) {
-            if ($pos = strrpos($dest, '/')) {
-                $parent_dir = base_path() . '/' . substr($dest, 0, $pos);
-                if (!is_dir($parent_dir)) {
-                    mkdir($parent_dir, 0777, true);
+        foreach (static::$pathRelation as $source => $target) {
+            $sourceFile = __DIR__ . "/$source";
+            $targetFile = base_path($target);
+
+            if ($pos = strrpos($target, '/')) {
+                $parentDir = base_path(substr($target, 0, $pos));
+                if (!is_dir($parentDir)) {
+                    create_dir($parentDir);
                 }
             }
-            //symlink(__DIR__ . "/$source", base_path()."/$dest");
-            copy_dir(__DIR__ . "/$source", base_path() . "/$dest");
+
+            copy_dir($sourceFile, $targetFile);
+            echo "Создан $targetFile\r\n";
         }
     }
 
     /**
-     * uninstallByRelation
      * @return void
      */
-    public static function uninstallByRelation()
+    public static function uninstallByRelation(): void
     {
-        foreach (static::$pathRelation as $source => $dest) {
-            $path = base_path() . "/$dest";
-            if (!is_dir($path) && !is_file($path)) {
-                continue;
-            }
-            /*if (is_link($path) {
-                unlink($path);
-            }*/
-            remove_dir($path);
+        foreach (static::$pathRelation as $source => $target) {
+            $targetFile = base_path($target);
+
+            remove_dir($targetFile);
+            echo "Удалён $target\r\n";
         }
     }
 }

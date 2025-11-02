@@ -4,9 +4,9 @@ namespace plugin\media\app\controller;
 
 use support\Request;
 
-use FrameX\Media\Util;
-use FrameX\Media\UriDispatcher;
-use FrameX\Media\ImageProcessing;
+use Triangle\Media\Util;
+use Triangle\Media\UriDispatcher;
+use Triangle\Media\ImageProcessing;
 
 class Processing
 {
@@ -16,11 +16,11 @@ class Processing
     const FILTERS = [
         'crop' => [
             'title' => 'crop',
-            'pattern' => '{width|int}[x{height|int}[&{x|int},{y|int}]]'
+            'pattern' => '{width|int}[x{height|int}[&{x|int},{y|int}]]' // W[xH[&X,Y]]
         ],
         'resize' => [
             'title' => 'resize',
-            'pattern' => '{width|int}[x{height|int}]'
+            'pattern' => '{width|int}[x{height|int}]' // W[xH]
         ],
         'pixelize' => [
             'title' => 'pixelize',
@@ -65,9 +65,9 @@ class Processing
                     $params = $filter['params'];
 
                     $width = $params['width'];
-                    $height = isset($params['height']) ? $params['height'] : null;
-                    $x = isset($params['x']) ? $params['x'] : null;
-                    $y = isset($params['y']) ? $params['y'] : null;
+                    $height = $params['height'] ?? null;
+                    $x = $params['x'] ?? null;
+                    $y = $params['y'] ?? null;
 
                     $imageProcessing->cropImage($width, $height, $x, $y);
 
@@ -78,7 +78,7 @@ class Processing
                     $params = $filter['params'];
 
                     $width = $params['width'];
-                    $height = isset($params['height']) ? $params['height'] : null;
+                    $height = $params['height'] ?? null;
 
                     $imageProcessing->resizeImage($width, $height);
 

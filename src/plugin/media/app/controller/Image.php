@@ -4,7 +4,7 @@ namespace plugin\media\app\controller;
 
 use support\Request;
 
-use FrameX\Media\Util;
+use Triangle\Media\Util;
 
 class Image
 {

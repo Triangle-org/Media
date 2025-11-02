@@ -12,7 +12,7 @@
  * @license     https://www.localzet.ru/license GNU GPLv3 License
  */
 
-namespace FrameX\Media;
+namespace Triangle\Media;
 
 /**
  * Class UriDispatcher
@@ -85,7 +85,7 @@ class UriDispatcher
      *
      * @throws \Exception
      */
-    public function __construct($uri, $filterList)
+    public function __construct($uri, $filterList = null)
     {
         $this->path = trim(rawurldecode($uri), '/');
 
@@ -102,7 +102,7 @@ class UriDispatcher
         $this->rawFilters = array_slice($this->pathParts, 1);
 
         /** Dictionary of supported filters */
-        $this->filterList = $filterList;
+        $this->filterList = $filterList ?? config('plugin.triangle.media.app.filters');
 
         $this->parsedFilters = $this->parseFilters();
     }

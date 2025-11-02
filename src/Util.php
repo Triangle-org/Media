@@ -12,7 +12,7 @@
  * @license     https://www.localzet.ru/license GNU GPLv3 License
  */
 
-namespace FrameX\Media;
+namespace Triangle\Media;
 
 class Util
 {
@@ -25,7 +25,7 @@ class Util
      */
     static function getImageUri($id)
     {
-        return config('plugin.framex.media.app.image_uri', "https://" . request()->host() . "/") . $id;
+        return config('plugin.triangle.media.app.image_uri', "https://" . request()->host() . "/") . $id;
     }
 
     /**
@@ -40,7 +40,7 @@ class Util
      */
     static function imageNameToId($name)
     {
-        $defaultExtension = config('plugin.framex.media.app.target_ext');
+        $defaultExtension = config('plugin.triangle.media.app.target_ext');
 
         /**
          * Allow getting images with extension at the end of uri
@@ -71,10 +71,10 @@ class Util
      */
     static function getPathToImageSource($id)
     {
-        $imageUrl = config('plugin.framex.media.app.image_uri') . $id . '.' . config('plugin.framex.media.app.target_ext');
+        $imageUrl = config('plugin.triangle.media.app.image_path') . $id . '.' . config('plugin.triangle.media.app.target_ext');
 
         if (!file_exists($imageUrl)) {
-            throw new \Exception('Файл не существует в' . config('plugin.framex.media.app.image_uri') . $id . '.' . config('plugin.framex.media.app.target_ext'));
+            throw new \Exception('Файл не существует в' . config('plugin.triangle.media.app.image_path') . $id . '.' . config('plugin.triangle.media.app.target_ext'));
         }
 
         return $imageUrl;

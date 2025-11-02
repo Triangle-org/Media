@@ -4,8 +4,8 @@ namespace plugin\media\app\controller;
 
 use support\Request;
 
-use FrameX\Media\Uploader;
-use FrameX\Media\RateLimiter;
+use Triangle\Media\Uploader;
+use Triangle\Media\RateLimiter;
 
 class Upload
 {

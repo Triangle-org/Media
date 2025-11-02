@@ -12,7 +12,12 @@
  * @license     https://www.localzet.ru/license GNU GPLv3 License
  */
 
-namespace FrameX\Media;
+namespace Triangle\Media;
+
+use Exception;
+use Imagick;
+use ImagickException;
+use ImagickPixel;
 
 /**
  * Class ImageProcessing
@@ -39,11 +44,11 @@ class ImageProcessing
      *
      * @param string $path - local path to image
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function __construct($path)
     {
-        $this->imagick = new \Imagick();
+        $this->imagick = new Imagick();
         $this->readImage($path);
 
         /** Fix image's orientation */
@@ -67,12 +72,12 @@ class ImageProcessing
      * @param int|null $x          - crop x
      * @param int|null $y          - crop y
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function cropImage($cropWidth, $cropHeight = null, $x = null, $y = null)
     {
         if ($cropWidth == null && $cropHeight == null) {
-            throw new \Exception("Incorrect input dimensions");
+            throw new Exception("Incorrect input dimensions");
         }
 
         if ($cropWidth == null) {
@@ -109,12 +114,12 @@ class ImageProcessing
      * @param int $resizeWidth
      * @param int $resizeHeight
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function resizeImage($resizeWidth, $resizeHeight = 0)
     {
         if (!$resizeWidth && !$resizeHeight) {
-            throw new \Exception('Incorrect input dimensions');
+            throw new Exception('Incorrect input dimensions');
         }
 
         if ($resizeWidth == 0) {
@@ -138,12 +143,12 @@ class ImageProcessing
      *
      * @param int $pixels
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function pixelizeImage($pixels)
     {
         if (!$pixels) {
-            throw new \Exception('Incorrect ratio');
+            throw new Exception('Incorrect ratio');
         }
 
         if ($this->width > $this->height) {
@@ -165,7 +170,7 @@ class ImageProcessing
      * @param float  $maxWidthRatio - max part of cover's width to stretch image
      * @param int    $margin        - number pof pixels up and down image on cover
      *
-     * @throws \Exception|\ImagickException
+     * @throws Exception|ImagickException
      */
     public function addCover($color, $width = 1000, $maxWidthRatio = 0.6, $margin = 10)
     {
@@ -177,7 +182,7 @@ class ImageProcessing
         $isValidColor = ctype_xdigit($color) && (strlen($color) == 6 || strlen($color) == 3);
 
         if (!$isValidColor) {
-            throw new \Exception("Color must be in a hex format without hash symbol");
+            throw new Exception("Color must be in a hex format without hash symbol");
         }
 
         /**
@@ -213,8 +218,8 @@ class ImageProcessing
         /**
          * Create a new image as a cover
          */
-        $cover = new \Imagick();
-        $cover->newImage($width, $coverHeight, new \ImagickPixel('#' . $color));
+        $cover = new Imagick();
+        $cover->newImage($width, $coverHeight, new ImagickPixel('#' . $color));
         $cover->setImageFormat('png');
 
         /**
@@ -228,7 +233,7 @@ class ImageProcessing
         /**
          * Compose cover and image
          */
-        $cover->compositeImage($this->imagick, \Imagick::COMPOSITE_IN, $imagePosition['x'], $imagePosition['y']);
+        $cover->compositeImage($this->imagick, Imagick::COMPOSITE_IN, $imagePosition['x'], $imagePosition['y']);
 
         /**
          * Save composed image as a processed image
@@ -279,7 +284,7 @@ class ImageProcessing
      *
      * @param string $path - local path to image
      *
-     * @throws \Exception
+     * @throws Exception
      */
     private function readImage($path)
     {
@@ -289,7 +294,7 @@ class ImageProcessing
 
         $this->extension = $this->imagick->getImageFormat();
         if (!$this->isValidExtension($this->extension)) {
-            throw new \Exception("Unsupported Extension");
+            throw new Exception("Unsupported Extension");
         }
 
         $this->recalculateDimensions();
@@ -304,22 +309,22 @@ class ImageProcessing
 
         switch ($orientation) {
                 /** rotate 180 degrees */
-            case \Imagick::ORIENTATION_BOTTOMRIGHT:
+            case Imagick::ORIENTATION_BOTTOMRIGHT:
                 $this->imagick->rotateimage("#000", 180);
                 break;
 
                 /** rotate 90 degrees CW */
-            case \Imagick::ORIENTATION_RIGHTTOP:
+            case Imagick::ORIENTATION_RIGHTTOP:
                 $this->imagick->rotateimage("#000", 90);
                 break;
 
                 /** rotate 90 degrees CCW */
-            case \Imagick::ORIENTATION_LEFTBOTTOM:
+            case Imagick::ORIENTATION_LEFTBOTTOM:
                 $this->imagick->rotateimage("#000", -90);
                 break;
         }
 
         /** Save image's orientation */
-        $this->imagick->setImageOrientation(\Imagick::ORIENTATION_TOPLEFT);
+        $this->imagick->setImageOrientation(Imagick::ORIENTATION_TOPLEFT);
     }
 }
