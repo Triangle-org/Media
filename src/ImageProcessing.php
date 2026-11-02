@@ -267,7 +267,7 @@ class ImageProcessing
     {
         $extension = strtolower($extension);
 
-        return in_array($extension, config('plugin.framex.media.app.exts'));
+        return in_array($extension, config('plugin.triangle.media.app.exts'), true);
     }
 
     /**

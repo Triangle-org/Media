@@ -34,11 +34,15 @@ class Uploader
      */
     public function __construct($projectId)
     {
-        if (!file_exists(config('plugin.framex.media.app.image_uri')) || !is_writable(config('plugin.framex.media.app.image_uri'))) {
-            $errorMessage = config('plugin.framex.media.app.image_uri') . ' directory should be writable';
-
-            trigger_error($errorMessage, E_USER_ERROR);
-            error_log($errorMessage);
+        $uploadDirectory = config('plugin.triangle.media.app.image_path');
+        if (!is_string($uploadDirectory) || $uploadDirectory === '') {
+            throw new \RuntimeException('The configured media image_path must be a non-empty directory path.');
+        }
+        if (!is_dir($uploadDirectory) && !@mkdir($uploadDirectory, 0775, true) && !is_dir($uploadDirectory)) {
+            throw new \RuntimeException('Unable to create the configured media image_path directory.');
+        }
+        if (!is_writable($uploadDirectory)) {
+            throw new \RuntimeException('The configured media image_path must be writable.');
         }
 
         $this->projectId = $projectId;
@@ -53,7 +57,7 @@ class Uploader
      */
     protected function isValidMimeType($mime)
     {
-        return in_array($mime, config('plugin.framex.media.app.mime_types'));
+        return in_array($mime, config('plugin.triangle.media.app.mime_types'), true);
     }
 
     /**
@@ -65,7 +69,7 @@ class Uploader
      */
     protected function isValidSize($size)
     {
-        return (int) $size <= config('plugin.framex.media.app.max_file_size');
+        return (int) $size > 0 && (int) $size <= (int) config('plugin.triangle.media.app.max_file_size');
     }
 
     /**
@@ -82,6 +86,9 @@ class Uploader
     {
         /** Get file hash */
         $hash = hash_file('sha256', $filepath);
+        if (!is_string($hash)) {
+            throw new \RuntimeException('Unable to calculate the uploaded image hash.');
+        }
 
         /** Check for a saved copy */
         $duplicateImageData = $this->findDuplicateByHash($hash);
@@ -90,65 +97,111 @@ class Uploader
             return $duplicateImageData;
         }
 
-        /** Generate filename */
-        $path = config('plugin.framex.media.app.image_uri') . generateId() . "." . config('plugin.framex.media.app.target_ext');
+        $directory = rtrim((string)config('plugin.triangle.media.app.image_path'), DIRECTORY_SEPARATOR);
+        $extension = (string)config('plugin.triangle.media.app.target_ext');
+        $path = $directory . DIRECTORY_SEPARATOR . generateId() . '.' . $extension;
+        $originalResourceLimits = [];
 
-        /** Save file to uploads dir */
-        file_put_contents($path, file_get_contents($filepath));
+        try {
+            if (!copy($filepath, $path)) {
+                throw new \RuntimeException('Unable to copy the uploaded image into storage.');
+            }
 
-        /** Get MIME-type from file */
-        $mimeType = mime_content_type($path);
+            /** Get MIME-type from file */
+            $mimeType = mime_content_type($path);
 
-        if (!$this->isValidMimeType($mimeType)) {
-            unlink($path);
-            throw new \Exception('Wrong source mime-type: ' . $mimeType);
+            if (!$this->isValidMimeType($mimeType)) {
+                throw new \Exception('Wrong source mime-type: ' . $mimeType);
+            }
+
+            foreach ([
+                \Imagick::RESOURCETYPE_MEMORY => (int)config('plugin.triangle.media.app.max_image_memory', 268435456),
+                \Imagick::RESOURCETYPE_MAP => (int)config('plugin.triangle.media.app.max_image_memory', 268435456),
+                \Imagick::RESOURCETYPE_DISK => (int)config('plugin.triangle.media.app.max_image_disk', 536870912),
+                \Imagick::RESOURCETYPE_THREAD => 1,
+                \Imagick::RESOURCETYPE_TIME => (int)config('plugin.triangle.media.app.max_image_time', 10),
+            ] as $resource => $limit) {
+                $originalResourceLimits[$resource] = \Imagick::getResourceLimit($resource);
+                if ($limit < 1 || !\Imagick::setResourceLimit($resource, $limit)) {
+                    throw new \RuntimeException('Unable to apply the configured image processing resource limit.');
+                }
+            }
+
+            $image = new \Imagick();
+            $image->pingImage($path);
+            $frames = $image->getNumberImages();
+            $maxFrames = (int)config('plugin.triangle.media.app.max_image_frames', 50);
+            $maxPixels = (int)config('plugin.triangle.media.app.max_image_pixels', 40000000);
+            $totalPixels = 0;
+            if ($frames < 1 || $frames > $maxFrames) {
+                $image->clear();
+                throw new \RuntimeException('Image frame count exceeds the configured limit.');
+            }
+            foreach ($image as $frame) {
+                $totalPixels += $frame->getImageWidth() * $frame->getImageHeight();
+                if ($totalPixels > $maxPixels) {
+                    $image->clear();
+                    throw new \RuntimeException('Image pixel count exceeds the configured limit.');
+                }
+            }
+            $image->clear();
+
+            $image = new \Imagick($path);
+
+            /** Add white background */
+            // $image->setImageBackgroundColor(new \ImagickPixel('white'));
+            // $image = $image->mergeImageLayers(\Imagick::LAYERMETHOD_FLATTEN);
+
+            /** Convert image to TARGET_EXT */
+            $image->setImageFormat($extension);
+            $image->setImageCompressionQuality(90);
+            $image->writeImage($path);
+
+            /** Save image resolution */
+            $width = $image->getImageWidth();
+            $height = $image->getImageHeight();
+
+            /** Get image size in bytes */
+            $imageSize = strlen($image->getImageBlob());
+
+            /**
+             * Finding main color
+             * 1) resize to 1x1 image with gaussian blur
+             * 2) get color of top left pixel
+             * 3) convert color from rgb to hex
+             */
+            $image->resizeImage(1, 1, \Imagick::FILTER_GAUSSIAN, 1);
+            $color = $image->getImagePixelColor(1, 1)->getColor();
+            $colorHex = sprintf("#%02x%02x%02x", $color['r'], $color['g'], $color['b']);
+
+            $imageData = [
+                'author' => $this->getAuthor(),
+                'filepath' => $path,
+                'width' => $width,
+                'height' => $height,
+                'color' => $colorHex,
+                'mime' => config('plugin.triangle.media.app.target_type'),
+                'size' => $imageSize,
+                'hash' => $hash,
+                'projectId' => $this->projectId
+            ];
+
+            /** Save image data to DB */
+            db()->insert(config('plugin.triangle.media.app.database.images'), $imageData);
+            $image->clear();
+
+            return $imageData;
+        } catch (\Throwable $exception) {
+            if (isset($image) && $image instanceof \Imagick) {
+                $image->clear();
+            }
+            @unlink($path);
+            throw $exception;
+        } finally {
+            foreach ($originalResourceLimits as $resource => $limit) {
+                @\Imagick::setResourceLimit($resource, $limit);
+            }
         }
-
-        /** Get uploaded image */
-        $image = new \Imagick($path);
-
-        /** Add white background */
-        // $image->setImageBackgroundColor(new \ImagickPixel('white'));
-        // $image = $image->mergeImageLayers(\Imagick::LAYERMETHOD_FLATTEN);
-
-        /** Convert image to TARGET_EXT */
-        $image->setImageFormat(config('plugin.framex.media.app.target_ext'));
-        $image->setImageCompressionQuality(90);
-        $image->writeImage($path);
-
-        /** Save image resolution */
-        $width = $image->getImageWidth();
-        $height = $image->getImageHeight();
-
-        /** Get image size in bytes */
-        $imageSize = strlen($image->getImageBlob());
-
-        /**
-         * Finding main color
-         * 1) resize to 1x1 image with gaussian blur
-         * 2) get color of top left pixel
-         * 3) convert color from rgb to hex
-         */
-        $image->resizeImage(1, 1, \Imagick::FILTER_GAUSSIAN, 1);
-        $color = $image->getImagePixelColor(1, 1)->getColor();
-        $colorHex = sprintf("#%02x%02x%02x", $color['r'], $color['g'], $color['b']);
-
-        $imageData = [
-            'author' => $this->getAuthor(),
-            'filepath' => $path,
-            'width' => $width,
-            'height' => $height,
-            'color' => $colorHex,
-            'mime' => config('plugin.framex.media.app.target_type'),
-            'size' => $imageSize,
-            'hash' => $hash,
-            'projectId' => $this->projectId
-        ];
-
-        /** Save image data to DB */
-        db()->insert(config('plugin.framex.media.app.database.images'), $imageData);
-
-        return $imageData;
     }
 
     /**
@@ -169,7 +222,7 @@ class Uploader
     protected function findDuplicateByHash($hash)
     {
         /** Check for a hash existing */
-        $response = db()->where('hash', $hash)->getOne(config('plugin.framex.media.app.database.images'));
+        $response = db()->where('hash', $hash)->getOne(config('plugin.triangle.media.app.database.images'));
 
         if (!!$response) {
             /* File already exist */
@@ -220,7 +273,7 @@ class Uploader
      */
     protected function upload($file, $size, $mime)
     {
-        if (!$file || !$size || !$mime) {
+        if (!$file || !is_numeric($size) || !$mime) {
             throw new \Exception('Source is damaged');
         }
 
@@ -256,7 +309,7 @@ class Uploader
 
         $mime = mime_content_type($data->getPathname());
 
-        return $this->upload($data->getPathname(), $data->getSize(), $mime);
+        return $this->upload($data->getPathname(), filesize($data->getPathname()), $mime);
     }
 
     /**
@@ -271,9 +324,11 @@ class Uploader
      */
     public function uploadLink($url)
     {
-        $size = request()->header('Content-Length');
-        $mime = request()->header('Content-Type');
-
-        return $this->upload($url, $size, $mime);
+        $download = RemoteImageDownloader::download((string)$url, (int)config('plugin.triangle.media.app.max_file_size'));
+        try {
+            return $this->upload($download['path'], $download['size'], $download['mime']);
+        } finally {
+            @unlink($download['path']);
+        }
     }
 }

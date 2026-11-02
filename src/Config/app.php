@@ -19,6 +19,11 @@ return [
     'image_path' => public_path() . '/media/upload/', // Директория для изображений
 
     'max_file_size' => 15 * 1024 * 1024,
+    'max_image_pixels' => 40000000,
+    'max_image_frames' => 50,
+    'max_image_memory' => 256 * 1024 * 1024,
+    'max_image_disk' => 512 * 1024 * 1024,
+    'max_image_time' => 10,
     'target_type' => 'image/png',
     'mime_types' => [
         'image/jpg',

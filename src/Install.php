@@ -37,7 +37,6 @@ class Install
      */
     protected static $pathRelation = array(
         'Config' => 'config/plugin/triangle/media',
-        'Autoload' => 'autoload/plugin/triangle/media',
     );
 
     /**

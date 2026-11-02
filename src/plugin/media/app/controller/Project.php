@@ -26,7 +26,7 @@ class Project
         ];
 
         /** Save project's data to database */
-        db()->insert(config('plugin.framex.media.app.database.projects'), $projectData);
+        db()->insert(config('plugin.triangle.media.app.database.projects'), $projectData);
 
         return response([
             'token' => $token

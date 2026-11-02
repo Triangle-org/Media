@@ -163,15 +163,15 @@ class RateLimiter
     function __construct()
     {
         /** If rate limiter was disabled in .env */
-        if (config('plugin.framex.media.app.rate_limiter.enable') == false) {
+        if (config('plugin.triangle.media.app.rate_limiter.enable') == false) {
             return;
         }
 
         /**
          * Define vars from env file
          */
-        $this->QUOTA = config('plugin.framex.media.app.rate_limiter.quota');
-        $this->CYCLE = config('plugin.framex.media.app.rate_limiter.quota');
+        $this->QUOTA = config('plugin.triangle.media.app.rate_limiter.quota');
+        $this->CYCLE = config('plugin.triangle.media.app.rate_limiter.cycle');
 
         if (!$this->QUOTA || !$this->CYCLE) {
             throw new \Exception('Rate limiter requires defined \'quota\' and \'cycle\' params. Check env file.');

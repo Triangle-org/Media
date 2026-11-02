@@ -20,15 +20,21 @@
     "email": "support@localzet.com",
     "source": "https://github.com/Triangle-org/Media"
   },
-  "autoload": {
-    "psr-4": {
-      "Triangle\\Media\\": "src/"
-    }
-  },
   "require": {
     "php": "^8.1",
     "triangle/engine": "^8.1",
+    "ext-curl": "*",
+    "ext-fileinfo": "*",
     "ext-imagick": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Triangle\\Media\\": "src/",
+      "plugin\\media\\": "src/plugin/media/"
+    }
+  },
+  "scripts": {
+    "test": "php tests/remote_image_downloader.php"
   },
   "config": {
     "platform": {

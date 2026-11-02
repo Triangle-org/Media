@@ -86,7 +86,7 @@ class Upload
             /**
              * Get ID as name without extension
              */
-            'id' => basename($imageData['link'], '.' . config('plugin.framex.media.app.target_ext')),
+            'id' => basename($imageData['link'], '.' . config('plugin.triangle.media.app.target_ext')),
             'url' => $imageData['link'],
             'mime' => $imageData['mime'],
             'width' => $imageData['width'],
@@ -125,7 +125,7 @@ class Upload
         $token = !empty(request()->post('token')) ? (string) request()->post('token') : '';
 
         if ($token) {
-            $mongoResponse = db()->where('token', $token)->getOne(config('plugin.framex.media.app.database.projects'));
+            $mongoResponse = db()->where('token', $token)->getOne(config('plugin.triangle.media.app.database.projects'));
 
             if (!empty($mongoResponse['id'])) {
                 /** Return project's id */
