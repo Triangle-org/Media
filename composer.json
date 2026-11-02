@@ -29,5 +29,10 @@
     "php": "^8.1",
     "triangle/engine": "^8.1",
     "ext-imagick": "*"
+  },
+  "config": {
+    "platform": {
+      "php": "8.1.0"
+    }
   }
 }
