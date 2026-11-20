@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * @package     Triangle Media Plugin
+ * @link        https://github.com/Triangle-org/Media
+ * @author      Ivan Zorin <creator@localzet.com>
+ * @copyright   Copyright © 2016-2026 Localzet Group. All rights reserved.
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
 namespace plugin\media\app\controller;
 
 use support\Request;
@@ -41,10 +49,16 @@ class Processing
             storage()->set($requestUri, $imageData);
         }
 
-        return responseBlob($imageData);
+        $contentType = (string)config('plugin.triangle.media.app.target_type', 'image/png');
+        return responseBlob($imageData, $contentType);
     }
 
     protected function returnImage($requestUri)
+    {
+        return ImageProcessing::withResourceLimits(fn() => $this->processImage($requestUri));
+    }
+
+    private function processImage($requestUri)
     {
         $dispatcher = new UriDispatcher($requestUri, self::FILTERS);
         $imageId = $dispatcher->id;

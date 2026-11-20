@@ -5,8 +5,9 @@
  * @link        https://github.com/Triangle-org/Media
  *
  * @author      Ivan Zorin <creator@localzet.com>
- * @copyright   Copyright (c) 2018-2024 Localzet Group
- * @license     GNU Affero General Public License, version 3
+ * @copyright   Copyright © 2016-2026 Localzet Group. All rights reserved.
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * @license     AGPL-3.0-or-later
  *
  *              This program is free software: you can redistribute it and/or modify
  *              it under the terms of the GNU Affero General Public License as

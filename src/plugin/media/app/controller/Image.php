@@ -1,4 +1,9 @@
 <?php
+/**
+ * @copyright   Copyright © 2016-2026 Localzet Group. All rights reserved.
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
 
 namespace plugin\media\app\controller;
 

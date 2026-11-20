@@ -1,11 +1,16 @@
 {
   "name": "triangle/media",
-  "description": "Triangle Media Plugin",
+  "description": "Image upload, processing, and delivery plugin for Triangle Engine",
   "type": "library",
+  "homepage": "https://github.com/Triangle-org/Media",
+  "readme": "README.md",
   "keywords": [
     "localzet",
-    "Triangle",
-    "Media"
+    "triangle",
+    "engine",
+    "media",
+    "image-upload",
+    "image-processing"
   ],
   "license": "AGPL-3.0-or-later",
   "authors": [
@@ -22,10 +27,13 @@
   },
   "require": {
     "php": "^8.1",
-    "triangle/engine": "^8.1",
+    "triangle/engine": "^9.0",
     "ext-curl": "*",
     "ext-fileinfo": "*",
     "ext-imagick": "*"
+  },
+  "suggest": {
+    "triangle/view": "Required by the bundled HTML view routes unless the host application replaces them."
   },
   "autoload": {
     "psr-4": {
@@ -34,7 +42,12 @@
     }
   },
   "scripts": {
-    "test": "php tests/remote_image_downloader.php"
+    "lint": "find . -path './vendor' -prune -o -path './.git' -prune -o -name '*.php' -type f -print0 | xargs -0 -n1 php -l",
+    "test": "php tests/remote_image_downloader.php && php tests/project_registration.php && php tests/upload_request_contract.php && php tests/uploader_file_validation.php && php tests/processing_response_type.php && php tests/image_paths_and_limits.php && php tests/image_processing_limits.php",
+    "check": [
+      "@lint",
+      "@test"
+    ]
   },
   "config": {
     "platform": {
