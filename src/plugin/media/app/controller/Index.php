@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * @package     Triangle Media Plugin
+ * @link        https://github.com/Triangle-org/Media
+ * @author      Ivan Zorin <creator@localzet.com>
+ * @copyright   Copyright © 2016-2026 Localzet Group. All rights reserved.
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
 namespace plugin\media\app\controller;
 
 use support\Request;
@@ -8,18 +16,13 @@ class Index
 {
     public function index(Request $request)
     {
-        $request->get('token');
+        $response = view("index");
+        $token = $request->get('token');
 
-        if (!empty($request->get('token'))) {
-            /**
-             * Almost endless cookie lifetime is a max integer value
-             * 2147483647 = 2^31 - 1
-             */
-            $cookie = $request->get('token');
-        } else {
-            $cookie = 'f36ac63b-7345-4b94-b9d4-c150824ef684';
+        if (!is_string($token) || !preg_match('/\A[a-zA-Z0-9_-]{1,128}\z/D', $token)) {
+            return $response;
         }
 
-        return view("index")->cookie('token', $cookie, 2147483647);
+        return $response->cookie('token', $token, 604800, '/', '', $request->isSecure(), false, 'Lax');
     }
 }

@@ -1,18 +1,20 @@
 <?php
 
 /**
- * @package     FrameX (FX) Media Plugin
- * @link        https://localzet.gitbook.io
+ * @package     Triangle Media Plugin
+ * @link        https://github.com/Triangle-org/Media
  * 
  * @author      localzet <creator@localzet.ru>
  * 
- * @copyright   Copyright (c) 2018-2020 Zorin Projects 
- * @copyright   Copyright (c) 2020-2022 NONA Team
+ * @copyright   Copyright © 2016-2026 Localzet Group. All rights reserved.
+ * SPDX-License-Identifier: AGPL-3.0-or-later
  * 
- * @license     https://www.localzet.ru/license GNU GPLv3 License
+ * @license     AGPL-3.0-or-later
  */
 
 namespace Triangle\Media;
+
+use Triangle\Engine\File;
 
 /**
  * Parent class, which describes acceptable extension,
@@ -27,12 +29,14 @@ class Uploader
      */
     public $projectId = '';
 
+    private ?string $authorIp;
+
     /**
      * Check uploads dir, prepare project's ID
      *
      * @param string $projectId
      */
-    public function __construct($projectId)
+    public function __construct($projectId, ?string $authorIp = null)
     {
         $uploadDirectory = config('plugin.triangle.media.app.image_path');
         if (!is_string($uploadDirectory) || $uploadDirectory === '') {
@@ -46,6 +50,7 @@ class Uploader
         }
 
         $this->projectId = $projectId;
+        $this->authorIp = $authorIp;
     }
 
     /**
@@ -130,13 +135,9 @@ class Uploader
             $image = new \Imagick();
             $image->pingImage($path);
             $frames = $image->getNumberImages();
-            $maxFrames = (int)config('plugin.triangle.media.app.max_image_frames', 50);
             $maxPixels = (int)config('plugin.triangle.media.app.max_image_pixels', 40000000);
             $totalPixels = 0;
-            if ($frames < 1 || $frames > $maxFrames) {
-                $image->clear();
-                throw new \RuntimeException('Image frame count exceeds the configured limit.');
-            }
+            ImageProcessing::assertFrameCountWithinLimit($frames);
             foreach ($image as $frame) {
                 $totalPixels += $frame->getImageWidth() * $frame->getImageHeight();
                 if ($totalPixels > $maxPixels) {
@@ -211,7 +212,11 @@ class Uploader
      */
     protected function getAuthor()
     {
-        return getRequestIp();
+        if ($this->authorIp !== null) {
+            return $this->authorIp;
+        }
+
+        return function_exists('request') ? request()->getRequestIp() : null;
     }
 
     /**
@@ -294,7 +299,7 @@ class Uploader
     /**
      * Public function for file uploading via POST form-data
      *
-     * @param null|array|\localzet\FrameX\Http\UploadFile $data - image file from $_FILES
+     * @param File $data Uploaded image file.
      *
      * @throws \Exception
      *
@@ -303,13 +308,22 @@ class Uploader
      */
     public function uploadFile($data)
     {
-        if (!file_exists($data->getPathname())) {
-            throw new \Exception('File is missing ' . $data->getPathname());
+        if (!$data instanceof File || !$data->isValid()) {
+            throw new \InvalidArgumentException('The uploaded file is invalid.');
         }
 
-        $mime = mime_content_type($data->getPathname());
+        $path = $data->getPathname();
+        if (!is_file($path)) {
+            throw new \RuntimeException('The uploaded file is missing.');
+        }
 
-        return $this->upload($data->getPathname(), filesize($data->getPathname()), $mime);
+        $size = filesize($path);
+        $mime = mime_content_type($path);
+        if (!is_int($size) || !is_string($mime)) {
+            throw new \RuntimeException('Unable to inspect the uploaded file.');
+        }
+
+        return $this->upload($path, $size, $mime);
     }
 
     /**

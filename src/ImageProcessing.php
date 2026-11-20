@@ -1,15 +1,15 @@
 <?php
 
 /**
- * @package     FrameX (FX) Media Plugin
- * @link        https://localzet.gitbook.io
+ * @package     Triangle Media Plugin
+ * @link        https://github.com/Triangle-org/Media
  * 
  * @author      localzet <creator@localzet.ru>
  * 
- * @copyright   Copyright (c) 2018-2020 Zorin Projects 
- * @copyright   Copyright (c) 2020-2022 NONA Team
+ * @copyright   Copyright © 2016-2026 Localzet Group. All rights reserved.
+ * SPDX-License-Identifier: AGPL-3.0-or-later
  * 
- * @license     https://www.localzet.ru/license GNU GPLv3 License
+ * @license     AGPL-3.0-or-later
  */
 
 namespace Triangle\Media;
@@ -86,10 +86,18 @@ class ImageProcessing
             $cropHeight = $cropWidth;
         }
 
+        $cropWidth = (int)$cropWidth;
+        $cropHeight = (int)$cropHeight;
+        self::assertDimensionsWithinLimit($cropWidth, $cropHeight);
+
         if ($x == null || $y == null) {
             $ratio = max($cropHeight / $this->height, $cropWidth / $this->width);
 
-            $this->imagick->scaleImage($ratio * $this->width, $ratio * $this->height);
+            $scaledWidth = (int)ceil($ratio * $this->width);
+            $scaledHeight = (int)ceil($ratio * $this->height);
+            self::assertDimensionsWithinLimit($scaledWidth, $scaledHeight);
+
+            $this->imagick->scaleImage($scaledWidth, $scaledHeight);
 
             $this->recalculateDimensions();
 
@@ -98,6 +106,12 @@ class ImageProcessing
 
             $this->imagick->cropImage($cropWidth, $cropHeight, $x, $y);
         } else {
+            $x = (int)$x;
+            $y = (int)$y;
+            if ($x < 0 || $y < 0 || $x > $this->width - $cropWidth || $y > $this->height - $cropHeight) {
+                throw new Exception('Crop area is outside the source image.');
+            }
+
             $this->imagick->cropImage($cropWidth, $cropHeight, $x, $y);
         }
 
@@ -118,8 +132,21 @@ class ImageProcessing
      */
     public function resizeImage($resizeWidth, $resizeHeight = 0)
     {
-        if (!$resizeWidth && !$resizeHeight) {
+        $resizeWidth = (int)$resizeWidth;
+        $resizeHeight = (int)$resizeHeight;
+
+        if ($resizeWidth < 0 || $resizeHeight < 0 || (!$resizeWidth && !$resizeHeight)) {
             throw new Exception('Incorrect input dimensions');
+        }
+
+        if ($resizeWidth > 0 && $resizeHeight > 0) {
+            self::assertDimensionsWithinLimit($resizeWidth, $resizeHeight);
+        } elseif ($resizeWidth > 0) {
+            $scaledHeight = (int)ceil($this->height * ($resizeWidth / $this->width));
+            self::assertDimensionsWithinLimit($resizeWidth, $scaledHeight);
+        } else {
+            $scaledWidth = (int)ceil($this->width * ($resizeHeight / $this->height));
+            self::assertDimensionsWithinLimit($scaledWidth, $resizeHeight);
         }
 
         if ($resizeWidth == 0) {
@@ -147,7 +174,8 @@ class ImageProcessing
      */
     public function pixelizeImage($pixels)
     {
-        if (!$pixels) {
+        $pixels = (int)$pixels;
+        if ($pixels < 1 || $pixels > max($this->width, $this->height)) {
             throw new Exception('Incorrect ratio');
         }
 
@@ -214,6 +242,7 @@ class ImageProcessing
          *         than the 60% of cover's width
          */
         $coverHeight = $margin * 2 + $this->height;
+        self::assertDimensionsWithinLimit((int)$width, (int)$coverHeight);
 
         /**
          * Create a new image as a cover
@@ -257,6 +286,55 @@ class ImageProcessing
     }
 
     /**
+     * Run image work with process-wide ImageMagick resource limits applied.
+     */
+    public static function withResourceLimits(callable $callback): mixed
+    {
+        $originalLimits = [];
+        $memoryLimit = (int)config('plugin.triangle.media.app.max_image_memory', 268435456);
+        $limits = [
+            Imagick::RESOURCETYPE_MEMORY => $memoryLimit,
+            Imagick::RESOURCETYPE_MAP => $memoryLimit,
+            Imagick::RESOURCETYPE_DISK => (int)config('plugin.triangle.media.app.max_image_disk', 536870912),
+            Imagick::RESOURCETYPE_THREAD => 1,
+            Imagick::RESOURCETYPE_TIME => (int)config('plugin.triangle.media.app.max_image_time', 10),
+        ];
+
+        try {
+            foreach ($limits as $resource => $limit) {
+                $originalLimits[$resource] = Imagick::getResourceLimit($resource);
+                if ($limit < 1 || !Imagick::setResourceLimit($resource, $limit)) {
+                    throw new \RuntimeException('Unable to apply the configured image processing resource limit.');
+                }
+            }
+
+            return $callback();
+        } finally {
+            foreach ($originalLimits as $resource => $limit) {
+                @Imagick::setResourceLimit($resource, $limit);
+            }
+        }
+    }
+
+    /** @internal */
+    public static function assertDimensionsWithinLimit(int $width, int $height): void
+    {
+        $maxPixels = (int)config('plugin.triangle.media.app.max_image_pixels', 40000000);
+        if ($width < 1 || $height < 1 || $maxPixels < 1 || $width > intdiv($maxPixels, $height)) {
+            throw new Exception('Image dimensions exceed the configured pixel limit.');
+        }
+    }
+
+    /** @internal */
+    public static function assertFrameCountWithinLimit(int $frameCount): void
+    {
+        $maxFrames = (int)config('plugin.triangle.media.app.max_image_frames', 50);
+        if ($frameCount < 1 || $maxFrames < 1 || $frameCount > $maxFrames) {
+            throw new Exception('Image frame count exceeds the configured limit.');
+        }
+    }
+
+    /**
      * Defines available image formats
      *
      * @param string $extension - ext we want to check
@@ -289,6 +367,34 @@ class ImageProcessing
     private function readImage($path)
     {
         $this->path = $path;
+
+        $probe = new Imagick();
+        try {
+            $probe->pingImage($path);
+            self::assertFrameCountWithinLimit($probe->getNumberImages());
+
+            $maxPixels = (int)config('plugin.triangle.media.app.max_image_pixels', 40000000);
+            if ($maxPixels < 1) {
+                throw new Exception('Image pixel limit must be greater than zero.');
+            }
+
+            $totalPixels = 0;
+            foreach ($probe as $frame) {
+                $frameWidth = $frame->getImageWidth();
+                $frameHeight = $frame->getImageHeight();
+                if ($frameWidth < 1 || $frameHeight < 1 || $frameWidth > intdiv($maxPixels, $frameHeight)) {
+                    throw new Exception('Image dimensions exceed the configured pixel limit.');
+                }
+
+                $framePixels = $frameWidth * $frameHeight;
+                if ($framePixels > $maxPixels - $totalPixels) {
+                    throw new Exception('Image frames exceed the configured total pixel limit.');
+                }
+                $totalPixels += $framePixels;
+            }
+        } finally {
+            $probe->clear();
+        }
 
         $readResult = @$this->imagick->readImage($path);
 

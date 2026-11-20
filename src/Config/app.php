@@ -1,20 +1,20 @@
 <?php
 
 /**
- * @package     FrameX (FX) Media Plugin
- * @link        https://localzet.gitbook.io
+ * @package     Triangle Media Plugin
+ * @link        https://github.com/Triangle-org/Media
  *
  * @author      localzet <creator@localzet.ru>
  *
- * @copyright   Copyright (c) 2018-2020 Zorin Projects
- * @copyright   Copyright (c) 2020-2022 NONA Team
+ * @copyright   Copyright © 2016-2026 Localzet Group. All rights reserved.
+ * SPDX-License-Identifier: AGPL-3.0-or-later
  *
- * @license     https://www.localzet.ru/license GNU GPLv3 License
+ * @license     AGPL-3.0-or-later
  */
 
 return [
     'enable' => true,
-    'project_registration' => true,
+    'project_registration' => false,
     'image_uri' => 'https://example.ru/media/', // URL для изображений
     'image_path' => public_path() . '/media/upload/', // Директория для изображений
 
