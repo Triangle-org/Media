@@ -26,11 +26,11 @@
 
 Опорные файлы: `CONTRIBUTING.md`.
 
-`composer.json`: triangle/media; runtime "^8.1"; triangle/engine.
+`composer.json`: triangle/media; runtime "^8.1"; `triangle/engine:^9.0`.
 
-Именованных test/lint/build-скриптов в проверенных JSON-манифестах нет. Перед запуском выбери существующую команду из CI, конфигурации тестов или Makefile; не выдавай предполагаемую команду за проверенную.
+Проверки: `composer run lint`, `composer run test`, `composer run check`, `composer audit --locked`. Интеграционный запуск зависит от PHP extensions и сервисов Triangle Engine; перед утверждениями о runtime проверяй фактическое окружение.
 
-Команды выше найдены в манифестах, а не проверены запуском. Перед выполнением прочитай их реализацию, нужные переменные и внешние зависимости. Не запускай нагрузочные, сетевые, deploy/migration-задачи или полный train как обычный smoke test.
+Перед выполнением проверок читай их реализацию и нужные внешние зависимости. Не запускай нагрузочные, сетевые, deploy/migration-задачи или полный train как обычный smoke test.
 
 ### Ограничения реализации
 

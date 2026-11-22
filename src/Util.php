@@ -1,15 +1,15 @@
 <?php
 
 /**
- * @package     FrameX (FX) Media Plugin
- * @link        https://localzet.gitbook.io
+ * @package     Triangle Media Plugin
+ * @link        https://github.com/Triangle-org/Media
  * 
  * @author      localzet <creator@localzet.ru>
  * 
- * @copyright   Copyright (c) 2018-2020 Zorin Projects 
- * @copyright   Copyright (c) 2020-2022 NONA Team
+ * @copyright   Copyright © 2016-2026 Localzet Group. All rights reserved.
+ * SPDX-License-Identifier: AGPL-3.0-or-later
  * 
- * @license     https://www.localzet.ru/license GNU GPLv3 License
+ * @license     AGPL-3.0-or-later
  */
 
 namespace Triangle\Media;
@@ -40,12 +40,12 @@ class Util
      */
     static function imageNameToId($name)
     {
-        $defaultExtension = config('plugin.triangle.media.app.target_ext');
+        $defaultExtension = (string)config('plugin.triangle.media.app.target_ext');
 
         /**
          * Allow getting images with extension at the end of uri
          */
-        if (preg_match('/(?P<id>[\w-]+)\.' . $defaultExtension . '$/', $name, $matches)) {
+        if (preg_match('/\A(?P<id>[a-zA-Z0-9_-]{1,128})\.' . preg_quote($defaultExtension, '/') . '\z/iD', $name, $matches)) {
             return $matches['id'];
         }
 
@@ -71,12 +71,35 @@ class Util
      */
     static function getPathToImageSource($id)
     {
-        $imageUrl = config('plugin.triangle.media.app.image_path') . $id . '.' . config('plugin.triangle.media.app.target_ext');
+        $directory = config('plugin.triangle.media.app.image_path');
+        $extension = config('plugin.triangle.media.app.target_ext');
 
-        if (!file_exists($imageUrl)) {
-            throw new \Exception('Файл не существует в' . config('plugin.triangle.media.app.image_path') . $id . '.' . config('plugin.triangle.media.app.target_ext'));
+        if (!is_string($id) || !preg_match('/\A[a-zA-Z0-9_-]{1,128}\z/D', $id)
+            || !is_string($directory) || $directory === ''
+            || !is_string($extension) || !preg_match('/\A[a-zA-Z0-9]{1,8}\z/D', $extension)) {
+            throw new \InvalidArgumentException('Invalid image identifier or storage configuration.');
         }
 
-        return $imageUrl;
+        $imageRoot = realpath($directory);
+        if ($imageRoot === false) {
+            throw new \RuntimeException('Configured image directory does not exist.');
+        }
+
+        $imageUrl = $imageRoot . DIRECTORY_SEPARATOR . $id . '.' . $extension;
+
+        if (!is_file($imageUrl)) {
+            throw new \RuntimeException('Image does not exist in the configured storage directory.');
+        }
+
+        $resolvedImage = realpath($imageUrl);
+        $rootPrefix = rtrim($imageRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        $comparisonPath = PHP_OS_FAMILY === 'Windows' ? strtolower((string)$resolvedImage) : $resolvedImage;
+        $comparisonRoot = PHP_OS_FAMILY === 'Windows' ? strtolower($rootPrefix) : $rootPrefix;
+
+        if ($resolvedImage === false || !str_starts_with($comparisonPath, $comparisonRoot)) {
+            throw new \RuntimeException('Image path escapes the configured storage directory.');
+        }
+
+        return $resolvedImage;
     }
 }

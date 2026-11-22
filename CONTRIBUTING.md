@@ -1,34 +1,25 @@
-# Contributing to the Project
+# Contributing to Triangle Media
+
 [Документ на русском языке](CONTRIBUTING_ru.md)
 
-We welcome you to our project and thank you for your interest in our code!
+Thank you for helping improve the Triangle Media plugin.
 
-## Getting Started
+Before opening a change, read the [Code of Conduct](CODE_OF_CONDUCT.md), [Security policy](SECURITY.md), and [project documentation](README.md).
 
-Before you begin, please familiarize yourself with our rules and guidelines:
+## Local checks
 
-- Code of Conduct
-- Code Style Guide
+Use PHP 8.1 or newer with the required `curl`, `fileinfo`, and `imagick` extensions. Run:
 
-## How to Contribute
+```sh
+composer validate --strict --no-check-publish --no-interaction
+composer run check --no-interaction
+composer audit --locked --no-interaction
+```
 
-There are many ways you can contribute to the project:
+Changes to image upload, URL fetching, storage paths, or filters should include a focused regression test. Do not add credentials, production data, or generated image files to a pull request.
 
-- Suggest improvements or new features
-- Submit bug fixes
-- Improve documentation
+## Pull requests
 
-## Creating a Pull Request
+Keep the change focused, describe any compatibility impact, and include the commands and results of the checks you ran. GitHub Actions tests PHP 8.1 and 8.5 with lowest and latest allowed dependencies.
 
-1. Fork the repository.
-2. Create a new branch.
-3. Make your changes.
-4. Submit a pull request.
-
-Please ensure that your code adheres to our code style guide and all tests pass.
-
-## Contact
-
-If you have any questions, feel free to reach out to us through the GitHub issues system.
-
-Thank you for your contribution!
+For general questions, use GitHub Issues. Report suspected vulnerabilities privately using GitHub's **Report a vulnerability** feature; do not publish exploit details in an issue.
