@@ -9,17 +9,21 @@ Triangle Media is an image plugin for applications built with Triangle Engine. I
 - PHP extensions: `curl`, `fileinfo`, and `imagick`
 - A writable image directory and a database connection configured by the host application
 
-The latest published package tag is `v1.1.0`, which requires Triangle Engine `^8.1`. This branch prepares the next major version for Triangle Engine 9 and its Server 7 runtime; that migration is not a published stable release yet. The next major version will not support the Engine 8 dependency line.
+Version `2.0.0` targets Triangle Engine 9 and Server 7 and is not compatible with Engine 8. Applications that remain on Engine 8 must use the legacy `1.1.0` release.
 
 ## Installation
 
-For the currently published Engine 8 package:
+For Triangle Engine 9:
+
+```sh
+composer require triangle/media:^2.0
+```
+
+For applications that remain on Engine 8:
 
 ```sh
 composer require triangle/media:^1.1
 ```
-
-After the Engine 9 compatible `2.0.0` release is published, install it with `composer require triangle/media:^2.0`.
 
 Triangle Engine discovers the plugin controllers through Composer autoloading. The plugin's `Triangle\Media\Install::install()` method copies missing default settings from `src/Config` into `config/plugin/triangle/media`; it preserves existing application settings. The host application's plugin lifecycle should call it when installing the package.
 
